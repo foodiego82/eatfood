@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="theme-color" content="#0a0f1e"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="단식 트래커"/>
+<title>단식 트래커</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{background:#0a0f1e;font-family:'Apple SD Gothic Neo','Pretendard',sans-serif;min-height:100vh;display:flex;justify-content:center;}
+  #app{width:100%;max-width:420px;background:#0d1424;min-height:100vh;display:flex;flex-direction:column;color:#e2e8f0;}
+
+  /* 헤더 */
+  header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 10px;border-bottom:1px solid #1e293b;}
+  .logo{font-size:17px;font-weight:700;color:#a5b4fc;}
+  .date-label{font-size:13px;color:#64748b;}
+
+  /* 탭 */
+  nav{display:flex;border-bottom:1px solid #1e293b;}
+  .tab{flex:1;padding:12px 0;background:none;border:none;border-bottom:2px solid transparent;color:#64748b;font-size:14px;cursor:pointer;font-weight:500;font-family:inherit;}
+  .tab.active{border-bottom:2px solid #6366f1;color:#a5b4fc;font-weight:700;}
+
+  /* 페이지 */
+  .page{display:none;flex:1;padding:16px 16px 80px;overflow-y:auto;}
+  .page.active{display:block;}
+
+  /* 배지 */
+  .badge{text-align:center;border-radius:20px;padding:6px 18px;font-size:13px;font-weight:700;margin:0 auto 14px;width:fit-content;display:block;}
+  .badge-normal{background:#1e1b4b;color:#a5b4fc;}
+  .badge-24{background:#451a03;color:#f59e0b;}
+
+  /* 원형 타이머 */
+  .ring-wrap{position:relative;width:220px;height:220px;margin:0 auto 18px;}
+  .ring-wrap svg{width:100%;height:100%;}
+  .ring-inner{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;}
+  .ring-status{font-size:13px;color:#94a3b8;margin-bottom:4px;}
+  .ring-big{font-size:30px;font-weight:800;letter-spacing:-1px;color:#f1f5f9;}
+  .ring-sub{font-size:12px;color:#64748b;margin-top:4px;}
+
+  /* 정보 카드 */
+  .info-row{display:flex;gap:8px;margin-bottom:16px;}
+  .info-card{flex:1;background:#1e293b;border-radius:12px;padding:10px 8px;text-align:center;}
+  .info-label{font-size:11px;color:#64748b;margin-bottom:4px;}
+  .info-val{font-size:15px;font-weight:700;color:#e2e8f0;}
+
+  /* 물 배너 */
+  .water-banner{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#0c4a6e,#164e63);border-radius:14px;padding:14px 16px;margin-bottom:16px;}
+  .water-icon{font-size:28px;flex-shrink:0;}
+  .water-title{font-size:14px;font-weight:700;color:#38bdf8;margin-bottom:2px;}
+  .water-sub{font-size:12px;color:#7dd3fc;}
+
+  /* 섹션 타이틀 */
+  .section-title{font-size:14px;font-weight:700;color:#94a3b8;margin-bottom:10px;margin-top:6px;}
+
+  /* 걷기 카드 */
+  .walk-card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid #334155;}
+  .walk-card.done{background:#14532d22;border:1px solid #166534;}
+  .walk-top{display:flex;justify-content:space-between;margin-bottom:8px;}
+  .walk-label{font-size:14px;font-weight:700;color:#e2e8f0;}
+  .walk-goal{font-size:12px;color:#64748b;}
+  .walk-bar-bg{background:#0f172a;border-radius:99px;height:6px;margin-bottom:10px;overflow:hidden;}
+  .walk-bar-fill{height:100%;border-radius:99px;transition:width 0.5s ease;}
+  .walk-row{display:flex;justify-content:space-between;align-items:center;}
+  .walk-time{font-size:20px;font-weight:800;letter-spacing:-1px;color:#f1f5f9;}
+  .walk-done-badge{font-size:14px;color:#4ade80;font-weight:700;}
+  .btn-group{display:flex;gap:6px;}
+  .btn{border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-weight:600;font-family:inherit;}
+  .btn-start{background:#6366f1;color:#fff;}
+  .btn-stop{background:#dc2626;color:#fff;}
+  .btn-reset{background:#334155;color:#94a3b8;padding:6px 10px;}
+  .btn-done-walk{background:#166534;color:#4ade80;}
+
+  /* 오늘 요약 */
+  .summary-card{background:#1e293b;border-radius:14px;padding:14px;margin-top:6px;}
+  .summary-title{font-size:13px;font-weight:700;color:#94a3b8;margin-bottom:10px;}
+  .summary-row{display:flex;justify-content:space-between;font-size:14px;color:#cbd5e1;padding:5px 0;border-bottom:1px solid #0f172a;}
+
+  /* 달력 */
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:20px;}
+  .cal-head{text-align:center;font-size:11px;color:#64748b;padding:4px 0;}
+  .cal-cell{background:#1e293b;border-radius:8px;padding:4px 2px;min-height:52px;text-align:center;}
+  .cal-cell.today{background:#1e1b4b;border:1px solid #6366f1;}
+  .cal-date{font-size:11px;color:#94a3b8;margin-bottom:2px;}
+  .cal-dots{font-size:10px;line-height:1.4;}
+
+  /* 통계 */
+  .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+  .stat-card{background:#1e293b;border-radius:14px;padding:14px;text-align:center;}
+  .stat-icon{font-size:22px;margin-bottom:4px;}
+  .stat-num{font-size:24px;font-weight:800;color:#f1f5f9;}
+  .stat-tot{font-size:14px;color:#64748b;}
+  .stat-label{font-size:12px;color:#94a3b8;margin-bottom:8px;}
+  .stat-bar-bg{background:#0f172a;border-radius:99px;height:5px;overflow:hidden;}
+  .stat-bar-fill{height:100%;background:#6366f1;border-radius:99px;transition:width 0.5s;}
+
+  /* 가이드 */
+  .guide-card{background:#1e293b;border-radius:14px;padding:14px;margin-bottom:10px;border-left:3px solid #6366f1;}
+  .guide-card.warn{border-left-color:#f59e0b;}
+  .guide-mode{font-size:14px;font-weight:700;color:#a5b4fc;margin-bottom:4px;}
+  .guide-when{font-size:12px;color:#f59e0b;margin-bottom:6px;}
+  .guide-desc{font-size:13px;color:#94a3b8;line-height:1.7;}
+  .water-guide-card{background:#0c1929;border-radius:14px;padding:16px;margin-bottom:10px;border:1px solid #0369a1;}
+  .wg-row{display:flex;justify-content:space-between;font-size:13px;color:#cbd5e1;padding:6px 0;border-bottom:1px solid #0f172a;}
+  .wg-highlight{color:#38bdf8;font-weight:700;}
+  .wg-note{font-size:12px;color:#7dd3fc;margin-top:10px;line-height:1.6;}
+
+  /* SVG 원 */
+  #ring-track{fill:none;stroke:#1e293b;stroke-width:14;}
+  #ring-progress{fill:none;stroke-width:14;stroke-linecap:round;transform-origin:center;transform:rotate(-90deg);transition:stroke-dashoffset 1s linear, stroke 0.5s;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <span class="logo">⏳ 단식 트래커</span>
+    <span class="date-label" id="date-label"></span>
+  </header>
+  <nav>
+    <button class="tab active" onclick="showTab('home')">홈</button>
+    <button class="tab" onclick="showTab('record')">기록</button>
+    <button class="tab" onclick="showTab('info')">가이드</button>
+  </nav>
+
+  <!-- 홈 -->
+  <div class="page active" id="tab-home">
+    <span class="badge badge-normal" id="mode-badge">⏱ 18:6 간헐적 단식</span>
+
+    <div class="ring-wrap">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <circle id="ring-track" cx="100" cy="100" r="88"/>
+        <circle id="ring-progress" cx="100" cy="100" r="88"
+          stroke="#6366f1"
+          stroke-dasharray="552.9"
+          stroke-dashoffset="0"/>
+      </svg>
+      <div class="ring-inner">
+        <div class="ring-status" id="ring-status">⏳ 계산 중...</div>
+        <div class="ring-big" id="ring-big">--:--:--</div>
+        <div class="ring-sub" id="ring-sub"></div>
+      </div>
+    </div>
+
+    <div class="info-row">
+      <div class="info-card"><div class="info-label">금식 시작</div><div class="info-val" id="fast-start-time">--:--</div></div>
+      <div class="info-card"><div class="info-label">식사 가능</div><div class="info-val" id="fast-end-time">--:--</div></div>
+      <div class="info-card"><div class="info-label">진행률</div><div class="info-val" id="fast-pct">0%</div></div>
+    </div>
+
+    <div class="water-banner">
+      <div class="water-icon">💧</div>
+      <div>
+        <div class="water-title">물을 충분히 마세요</div>
+        <div class="water-sub">단식 중 하루 2L 이상 — 공복감 완화, 노폐물 배출에 도움</div>
+      </div>
+    </div>
+
+    <div class="section-title">🚶 오늘의 걷기 운동</div>
+
+    <!-- 오전 걷기 -->
+    <div class="walk-card" id="walk-am-card">
+      <div class="walk-top"><span class="walk-label">🌅 오전 걷기</span><span class="walk-goal">목표 30분</span></div>
+      <div class="walk-bar-bg"><div class="walk-bar-fill" id="walk-am-bar" style="width:0%;background:#f59e0b;"></div></div>
+      <div class="walk-row">
+        <span class="walk-time" id="walk-am-time">00:00:00</span>
+        <div class="btn-group" id="walk-am-btns">
+          <button class="btn btn-start" onclick="toggleWalk('am')">▶ 시작</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오후 걷기 -->
+    <div class="walk-card" id="walk-pm-card">
+      <div class="walk-top"><span class="walk-label">🌇 오후 걷기</span><span class="walk-goal">목표 30분</span></div>
+      <div class="walk-bar-bg"><div class="walk-bar-fill" id="walk-pm-bar" style="width:0%;background:#6366f1;"></div></div>
+      <div class="walk-row">
+        <span class="walk-time" id="walk-pm-time">00:00:00</span>
+        <div class="btn-group" id="walk-pm-btns">
+          <button class="btn btn-start" onclick="toggleWalk('pm')">▶ 시작</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 오늘 요약 -->
+    <div class="summary-card">
+      <div class="summary-title">오늘 요약</div>
+      <div class="summary-row"><span id="sum-fast-label">단식 18:6</span><span id="sum-fast-status">⏳</span></div>
+      <div class="summary-row"><span>오전 걷기</span><span id="sum-am">—</span></div>
+      <div class="summary-row"><span>오후 걷기</span><span id="sum-pm">—</span></div>
+    </div>
+  </div>
+
+  <!-- 기록 -->
+  <div class="page" id="tab-record">
+    <div class="section-title">📅 최근 35일 기록</div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="section-title">📊 통계 (최근 35일)</div>
+    <div class="stat-grid" id="stat-grid"></div>
+  </div>
+
+  <!-- 가이드 -->
+  <div class="page" id="tab-info">
+    <div class="section-title">📋 나의 단식 패턴</div>
+    <div class="guide-card">
+      <div class="guide-mode">18:6 단식</div>
+      <div class="guide-when">월~수, 금(오후 6시↑)~일 매일</div>
+      <div class="guide-desc">오후 6시 금식 시작 → 다음 날 낮 12시 식사 가능</div>
+    </div>
+    <div class="guide-card">
+      <div class="guide-mode">24시간 단식</div>
+      <div class="guide-when">목요일 오후 6시 ~ 금요일 오후 6시</div>
+      <div class="guide-desc">주 1회 연장 단식 — 자가포식(autophagy) 극대화</div>
+    </div>
+
+    <div class="section-title">💧 물 섭취 가이드</div>
+    <div class="water-guide-card">
+      <div class="wg-row"><span>🌅 기상 직후</span><span>물 500ml</span></div>
+      <div class="wg-row"><span>🏃 운동 전후</span><span>물 300~500ml</span></div>
+      <div class="wg-row"><span>⏳ 단식 중</span><span>물·허브티·블랙커피</span></div>
+      <div class="wg-row"><span>📅 하루 목표</span><span class="wg-highlight">2L 이상</span></div>
+      <div class="wg-note">단식 중 물은 무제한 섭취 가능 — 공복감 완화 및 노폐물 배출에 효과적입니다.</div>
+    </div>
+
+    <div class="section-title">🚶 걷기 운동 가이드</div>
+    <div class="guide-card">
+      <div class="guide-desc">• 오전 걷기 — 공복 유산소. 지방 연소 효율이 가장 높은 시간대</div>
+      <div class="guide-desc">• 오후 걷기 — 식사 후 혈당 스파이크 방지 + 소화 촉진</div>
+      <div class="guide-desc">• 목표: 회당 30분 이상, 빠른 걸음 (약 100~110보/분)</div>
+      <div class="guide-desc">• 24시간 단식 중 운동 시 강도를 낮추고 물 섭취를 더 늘리세요</div>
+    </div>
+
+    <div class="section-title">⚠️ 주의사항</div>
+    <div class="guide-card warn">
+      <div class="guide-desc">• 식사 가능 시간에도 과식 금지 — 균형 잡힌 영양섭취 유지</div>
+      <div class="guide-desc">• 어지럼증·두통 심할 경우 단식 중단</div>
+      <div class="guide-desc">• 당뇨·저혈압 등 기저질환 있을 경우 의사 상담 필요</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 상수 ──
+const FAST_START = 18;    // 오후 6시
+const FAST_NORMAL = 18;   // 18h
+const FAST_24H = 24;
+const WALK_GOAL = 30 * 60; // 30분(초)
+const DAYS = ["일","월","화","수","목","금","토"];
+
+// ── 탭 전환 ──
+function showTab(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const tabs = document.querySelectorAll('.tab');
+  const idx = ['home','record','info'].indexOf(name);
+  tabs[idx].classList.add('active');
+  if (name === 'record') renderRecord();
+}
+
+// ── 스토리지 ──
+function loadRec() { try { return JSON.parse(localStorage.getItem('if_rec_v1')) || {}; } catch { return {}; } }
+function saveRec(r) { try { localStorage.setItem('if_rec_v1', JSON.stringify(r)); } catch {} }
+
+let records = loadRec();
+function todayKey(d) {
+  const d2 = d || new Date();
+  return d2.getFullYear() + '-' + pad(d2.getMonth()+1) + '-' + pad(d2.getDate());
+}
+function getTodayRec() { return records[todayKey()] || {}; }
+function updateTodayRec(patch) {
+  const k = todayKey();
+  records[k] = { ...getTodayRec(), ...patch };
+  saveRec(records);
+}
+
+// ── 단식 계산 ──
+function getFastInfo(now) {
+  const h = now.getHours(), day = now.getDay();
+  const is24 = (day === 4 && h >= FAST_START) || (day === 5 && h < FAST_START);
+  const dur = is24 ? FAST_24H : FAST_NORMAL;
+
+  let fastStart, isFasting;
+  if (h >= FAST_START) {
+    isFasting = true;
+    fastStart = new Date(now); fastStart.setHours(FAST_START, 0, 0, 0);
+  } else {
+    const yest = new Date(now); yest.setDate(now.getDate()-1); yest.setHours(FAST_START,0,0,0);
+    const elapsed = (now - yest) / 3600000;
+    isFasting = elapsed < dur;
+    fastStart = yest;
+  }
+
+  const fastEnd = new Date(fastStart.getTime() + dur * 3600000);
+  const elapsedSec = isFasting ? Math.floor((now - fastStart) / 1000) : 0;
+  const remainSec = isFasting ? Math.max(0, Math.floor((fastEnd - now) / 1000)) : 0;
+  const progress = isFasting ? Math.min(1, elapsedSec / (dur * 3600)) : 1;
+  return { isFasting, is24, dur, fastStart, fastEnd, elapsedSec, remainSec, progress };
+}
+
+// ── 유틸 ──
+function pad(n) { return String(n).padStart(2,'0'); }
+function secToHMS(s) { return pad(Math.floor(s/3600))+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60); }
+function fmtTime(d) {
+  const h=d.getHours(), m=d.getMinutes();
+  const ap = h<12?'오전':'오후', hh = h%12===0?12:h%12;
+  return ap+' '+hh+':'+pad(m);
+}
+
+// ── 걷기 상태 ──
+const walk = {
+  am: { sec: 0, running: false, done: false },
+  pm: { sec: 0, running: false, done: false }
+};
+
+function toggleWalk(slot) {
+  const w = walk[slot];
+  if (w.done) return;
+  w.running = !w.running;
+  renderWalk(slot);
+}
+function resetWalk(slot) {
+  walk[slot].sec = 0; walk[slot].running = false;
+  renderWalk(slot);
+}
+function completeWalk(slot) {
+  walk[slot].done = true; walk[slot].running = false;
+  updateTodayRec(slot === 'am' ? { walkAm: true } : { walkPm: true });
+  renderWalk(slot);
+  renderSummary();
+}
+
+function renderWalk(slot) {
+  const w = walk[slot];
+  const pct = Math.min(100, Math.round(w.sec / WALK_GOAL * 100));
+  document.getElementById('walk-'+slot+'-time').textContent = secToHMS(w.sec);
+  document.getElementById('walk-'+slot+'-bar').style.width = pct + '%';
+
+  const card = document.getElementById('walk-'+slot+'-card');
+  const btns = document.getElementById('walk-'+slot+'-btns');
+
+  if (w.done || getTodayRec()[slot==='am'?'walkAm':'walkPm']) {
+    card.className = 'walk-card done';
+    btns.innerHTML = '<span class="walk-done-badge">✅ 완료</span>';
+    return;
+  }
+  card.className = 'walk-card';
+
+  let html = '';
+  if (w.running) {
+    html = `<button class="btn btn-stop" onclick="toggleWalk('${slot}')">⏸ 정지</button>`;
+  } else if (w.sec > 0) {
+    html = `<button class="btn btn-start" onclick="toggleWalk('${slot}')">▶ 계속</button>
+            <button class="btn btn-reset" onclick="resetWalk('${slot}')">↺</button>`;
+    if (w.sec >= WALK_GOAL) {
+      html += `<button class="btn btn-done-walk" onclick="completeWalk('${slot}')">완료</button>`;
+    }
+  } else {
+    html = `<button class="btn btn-start" onclick="toggleWalk('${slot}')">▶ 시작</button>`;
+  }
+  btns.innerHTML = html;
+}
+
+function renderSummary() {
+  const r = getTodayRec();
+  const fi = getFastInfo(new Date());
+  document.getElementById('sum-fast-label').textContent = '단식 ' + (fi.is24 ? '24h' : '18:6');
+  document.getElementById('sum-fast-status').textContent = (r.fastOk || (!fi.isFasting && fi.progress >= 1)) ? '✅' : '⏳';
+  document.getElementById('sum-am').textContent = r.walkAm ? '✅' : '—';
+  document.getElementById('sum-pm').textContent = r.walkPm ? '✅' : '—';
+}
+
+// ── 메인 틱 ──
+function tick() {
+  const now = new Date();
+  const fi = getFastInfo(now);
+
+  // 날짜
+  document.getElementById('date-label').textContent =
+    (now.getMonth()+1)+'월 '+now.getDate()+'일 ('+DAYS[now.getDay()]+')';
+
+  // 배지
+  const badge = document.getElementById('mode-badge');
+  if (fi.is24) { badge.className='badge badge-24'; badge.textContent='🔥 24시간 단식 (목→금)'; }
+  else { badge.className='badge badge-normal'; badge.textContent='⏱ 18:6 간헐적 단식'; }
+
+  // 링
+  const CIRC = 2 * Math.PI * 88;
+  const prog = document.getElementById('ring-progress');
+  prog.setAttribute('stroke-dashoffset', CIRC * (1 - fi.progress));
+  prog.setAttribute('stroke', fi.isFasting ? (fi.is24 ? '#f59e0b' : '#6366f1') : '#22c55e');
+
+  if (fi.isFasting) {
+    document.getElementById('ring-status').textContent = '🚫 단식 중';
+    document.getElementById('ring-big').textContent = secToHMS(fi.elapsedSec);
+    document.getElementById('ring-sub').textContent = '남은 시간 ' + secToHMS(fi.remainSec);
+  } else {
+    document.getElementById('ring-status').textContent = '✅ 식사 가능';
+    document.getElementById('ring-big').textContent = fmtTime(now);
+    document.getElementById('ring-sub').textContent = '오후 6시까지 식사';
+  }
+
+  // 정보 카드
+  document.getElementById('fast-start-time').textContent = fmtTime(fi.fastStart);
+  document.getElementById('fast-end-time').textContent = fmtTime(fi.fastEnd);
+  document.getElementById('fast-pct').textContent = Math.round(fi.progress * 100) + '%';
+
+  // 걷기 타이머
+  ['am','pm'].forEach(slot => {
+    if (walk[slot].running) {
+      walk[slot].sec++;
+      renderWalk(slot);
+    }
+  });
+
+  renderSummary();
+}
+
+// ── 기록 탭 렌더 ──
+function renderRecord() {
+  const now = new Date();
+  const days = [];
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date(now); d.setDate(now.getDate()-i); days.push(d);
+  }
+
+  // 달력
+  const grid = document.getElementById('cal-grid');
+  let html = DAYS.map(d => `<div class="cal-head">${d}</div>`).join('');
+  // 첫날 빈칸
+  const firstDay = days[0].getDay();
+  for (let i = 0; i < firstDay; i++) html += '<div></div>';
+  days.forEach(d => {
+    const k = todayKey(d);
+    const r = records[k] || {};
+    const isToday = k === todayKey();
+    html += `<div class="cal-cell${isToday?' today':''}">
+      <div class="cal-date">${d.getDate()}</div>
+      <div class="cal-dots">
+        ${r.fastOk?'⏳':''}${r.walkAm?'👟':''}${r.walkPm?'🏃':''}${r.fast24Ok?'🔥':''}
+      </div></div>`;
+  });
+  grid.innerHTML = html;
+
+  // 통계
+  const total = days.length;
+  const cnt = (fn) => days.filter(d => fn(records[todayKey(d)] || {})).length;
+  const stats = [
+    ['단식 성공', cnt(r=>r.fastOk), total, '⏳'],
+    ['오전 걷기', cnt(r=>r.walkAm), total, '🌅'],
+    ['오후 걷기', cnt(r=>r.walkPm), total, '🌇'],
+    ['24h 단식',  cnt(r=>r.fast24Ok), 5, '🔥'],
+  ];
+  document.getElementById('stat-grid').innerHTML = stats.map(([label,c,t,icon]) => `
+    <div class="stat-card">
+      <div class="stat-icon">${icon}</div>
+      <div class="stat-num">${c}<span class="stat-tot">/${t}</span></div>
+      <div class="stat-label">${label}</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.round(c/t*100)}%"></div></div>
+    </div>`).join('');
+}
+
+// ── 시작 ──
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
